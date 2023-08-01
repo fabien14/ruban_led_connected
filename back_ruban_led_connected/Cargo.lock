@@ -28,6 +28,7 @@ name = "back_ruban_led_connected"
 version = "0.1.0"
 dependencies = [
  "bluer",
+ "futures",
  "tokio",
 ]
 
