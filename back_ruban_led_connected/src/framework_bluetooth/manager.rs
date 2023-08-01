@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use bluer::{Adapter, Device, Session, AdapterEvent, Address};
-use futures::{pin_mut, StreamExt};
-use std::sync::{Arc, Mutex};
+use bluer::{Adapter, Session};
+use futures::pin_mut;
 use tokio::time;
 
 #[derive(Clone)]
