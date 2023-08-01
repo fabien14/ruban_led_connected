@@ -2,13 +2,13 @@ use std::collections::HashMap;
 use bluer::{Adapter, Device, Session, AdapterEvent, Address};
 use futures::{pin_mut, StreamExt};
 use std::sync::{Arc, Mutex};
+use tokio::time;
 
 #[derive(Clone)]
 pub struct Manager {
     pub devices_connected: HashMap<[u8; 6], String>, 
     session: Session,
     adapter: Adapter,
-    device_found: Arc<Mutex<Vec<Address>>>,
 }
 
 impl Manager {
@@ -28,60 +28,39 @@ impl Manager {
             devices_connected: HashMap::new(), 
             session: session.clone(), 
             adapter: adapter.clone(),
-            device_found: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
     pub async fn start_scan(&self) {
-        let device_found_clone = Arc::clone(&(self.device_found));
-        let cl = self.adapter.clone();
+        let is_discovering = match self.adapter.is_discovering().await {
+            Ok(is_discovering) => is_discovering,
+            Err(_) => false,
+        };
 
+        if is_discovering {
+            return;
+        }
+
+        let cl = self.adapter.clone();
         tokio::spawn(async move {
-            //let mut device_found_list = device_found_clone.lock().unwrap();
             let discover = cl.discover_devices().await.unwrap();
             pin_mut!(discover);
 
-            let mut compter = 0;
-            while compter < 10 {
-
-                let evt = discover.next().await.unwrap();
-                
-                match evt {
-                    AdapterEvent::DeviceAdded(addr) => {
-                        //(*device_found_list).push(addr);
-                        println!("Device added {addr}");
-                    },
-                    AdapterEvent::DeviceRemoved(addr) => {
-                        println!("Device removed {addr}");
-                    },
-                    AdapterEvent::PropertyChanged(addr) => { 
-                        println!("Device PropertyChanged {:?}", addr);
-                    },
-                }
-                compter += 1;
-            }
+            let timeout = cl.discoverable_timeout().await.unwrap() as u64;
+            let scan_duration: time::Duration = time::Duration::from_secs(timeout);
+            time::sleep(scan_duration).await;
         });
-        
         
         println!("Stopping discovery");
     }
 
     pub async fn get_devices(&self) {
-        let device_found_clone = Arc::clone(&(self.device_found));
-        let device_found_list = device_found_clone.lock().unwrap();
-        let bis: Vec<Address> = (*device_found_list).clone();
-
-        for d in bis {
-            println!("{:?}", d);
-        }
-
         let device_addresses_return = self.adapter.device_addresses().await;
         let device_addresses = match device_addresses_return {
             Ok(device_addresses) => device_addresses,
-            Err(error) => panic!("Qdresse found : {:?}", error),
+            Err(error) => panic!("Adresse not found : {:?}", error),
         };
 
-        let mut target_device : Option<Device> = None;
         for device_addresse in device_addresses {
             println!("{:?}", device_addresse);
 
