@@ -1,4 +1,6 @@
 use back_ruban_led_connected::framework_bluetooth::Manager;
+use back_ruban_led_connected::framework_api::{Application, get_configuration};
+
 use std::time::Duration;
 use tokio::time;
 use tokio;
@@ -20,4 +22,8 @@ async fn main() {
     manager_bluetooth.get_devices().await;
 
     println!("Hello, world!");
+
+    let configuration = get_configuration().expect("Failed to read configuration.");
+    //let application = Application::build(configuration.clone()).await?;
+
 }
