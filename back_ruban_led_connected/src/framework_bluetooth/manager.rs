@@ -1,7 +1,15 @@
+use crate::framework_bluetooth::{Device, DeviceName, DeviceAddress};
+
+use serde::Serialize;
 use std::collections::HashMap;
 use bluer::{Adapter, Session};
 use futures::pin_mut;
 use tokio::time;
+
+#[derive(Clone, Serialize)]
+pub struct Devices {
+    pub device: Vec<Device>,
+}
 
 #[derive(Clone)]
 pub struct Manager {
@@ -11,7 +19,7 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub async fn new() -> Manager {
+    pub async fn new() -> Self {
         let session = match Session::new().await {
             Ok(session) => session,
             Err(e) => panic!("New session error : {:?}", e),
@@ -23,7 +31,7 @@ impl Manager {
         
         let _ = adapter.set_powered(true).await;
 
-        Manager { 
+        Self { 
             devices_connected: HashMap::new(), 
             session: session.clone(), 
             adapter: adapter.clone(),
@@ -53,23 +61,28 @@ impl Manager {
         println!("Stopping discovery");
     }
 
-    pub async fn get_devices(&self) {
+    pub async fn get_devices(&self) -> Option<Devices> {
         let device_addresses_return = self.adapter.device_addresses().await;
         let device_addresses = match device_addresses_return {
             Ok(device_addresses) => device_addresses,
             Err(error) => panic!("Adresse not found : {:?}", error),
         };
 
-        for device_addresse in device_addresses {
-            println!("{:?}", device_addresse);
+        let mut devices = Devices {
+            device: Vec::new(),
+        };
 
-            let device = self.adapter.device(device_addresse);
-            let option_name = match device {
-                Ok(d) => d.name().await.unwrap(),
-                Err(e) => {
-                    println!("{:?}", e);
-                    None
-                },
+        for device_addresse in device_addresses {
+
+            let option_device = self.adapter.device(device_addresse);
+            let device = match option_device {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+
+            let option_name = match device.name().await {
+                Ok(n) => n,
+                Err(_) => None,
             };
 
             let name = match option_name {
@@ -77,7 +90,19 @@ impl Manager {
                 None => String::from("NA"),
             };
 
-            println!("Device found: {device_addresse} {name}");
+            devices.device.push(Device {
+                name: DeviceName(name),
+                address: DeviceAddress(device.address().to_string()),
+            });
         }
+
+        Some(devices)
+    }
+
+    pub async fn get_device(&self, address: DeviceAddress) -> Option<Device> {
+        let devices = self.get_devices().await.unwrap();
+        let device = devices.device.into_iter().find(|d| d.address == address.clone());
+
+        device
     }
 }

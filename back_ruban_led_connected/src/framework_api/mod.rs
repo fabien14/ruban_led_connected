@@ -1,5 +1,5 @@
 mod startup;
-mod configuration;
+mod routes;
 
 pub use startup::Application;
-pub use configuration::get_configuration;
+pub use routes::{scan, devices, device};
