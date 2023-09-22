@@ -1,4 +1,3 @@
-
 use config;
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
@@ -7,7 +6,6 @@ use serde_aux::field_attributes::deserialize_number_from_string;
 pub struct Settings {
     pub application: ApplicationSettings,
 }
-
 
 #[derive(Deserialize, Clone)]
 pub struct ApplicationSettings {

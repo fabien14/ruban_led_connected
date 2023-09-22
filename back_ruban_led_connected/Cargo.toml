@@ -15,8 +15,12 @@ path = "src/main.rs"
 bluer = { version = "0.15.7", features = ["full"] }
 tokio = { version = "1.28.2", features = ["full"] }
 futures = "0.3.28"
-actix-web = "4"
 config = "0.13.3"
 serde = { version = "1.0.160", features = ["derive"] }
 serde-aux = "4"
 anyhow = "1"
+actix = "0.13.0"
+actix-web = "4"
+actix-web-actors = "4.2.0"
+rand = "0.8.5"
+actix-rt = "2.8.0"

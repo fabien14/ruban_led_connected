@@ -1,5 +1,5 @@
-mod startup;
 mod routes;
+mod startup;
 
+pub use routes::{connect, device, devices, scan, BluetoothServerWS};
 pub use startup::Application;
-pub use routes::{scan, devices, device};

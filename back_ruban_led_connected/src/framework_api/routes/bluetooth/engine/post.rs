@@ -1,11 +1,10 @@
-use crate::framework_bluetooth::Manager;
+use crate::framework_bluetooth::Communication;
 
-use actix_web::{web, Responder, Result, HttpResponse};
+use actix_web::{web, HttpResponse, Responder, Result};
 
-
-pub async fn scan(data: web::Data<Manager>) -> Result<impl Responder> {
+pub async fn scan(data: web::Data<Communication>) -> Result<impl Responder> {
     let manager_bluetooth = &data;
-    manager_bluetooth.start_scan().await;
+    manager_bluetooth.manager.start_scan().await;
 
     Ok(HttpResponse::Ok())
 }

@@ -1,3 +1,3 @@
 mod bluetooth;
 
-pub use bluetooth::{scan, devices, device};
+pub use bluetooth::{connect, device, devices, scan, BluetoothServerWS};

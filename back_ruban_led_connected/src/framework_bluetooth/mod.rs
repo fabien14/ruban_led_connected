@@ -1,5 +1,7 @@
-mod manager;
+mod communication;
 mod device;
+mod manager;
 
-pub use manager::{Manager, Devices};
-pub use device::{Device, DeviceName, DeviceAddress};
+pub use communication::Communication;
+pub use device::{Device, DeviceAddress, DeviceName};
+pub use manager::{Devices, Manager};
