@@ -1,10 +1,10 @@
-use crate::framework_bluetooth::{Communication, DeviceAddress};
+use crate::framework_bluetooth::{Communication, DeviceAddress, DevicesFilters};
 
 use actix_web::{web, Responder, Result};
 
-pub async fn devices(data: web::Data<Communication>) -> Result<impl Responder> {
+pub async fn devices(data: web::Data<Communication>, filter: web::Query<DevicesFilters>) -> Result<impl Responder> {
     let manager_bluetooth = &data;
-    let devices = manager_bluetooth.manager.get_devices().await.unwrap();
+    let devices = manager_bluetooth.manager.get_devices(Some(filter.into_inner())).await.unwrap();
 
     Ok(web::Json(devices))
 }

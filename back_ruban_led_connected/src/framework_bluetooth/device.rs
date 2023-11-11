@@ -64,6 +64,10 @@ impl Device {
         }
     }
 
+    pub fn to_string(&self) -> String {
+        format!("{:?}", self)
+    }
+
     pub async fn pair(&self) {
         let is_paired = self.bluer_device.is_paired().await.unwrap_or_default();
         if !is_paired {
@@ -78,6 +82,7 @@ impl Device {
         let mut stream_socket = None;
 
         println!("    Connecting...");
+        println!("dddddd");
         let mut retries = 2;
         while retries > 0 {
             stream_socket = match bluer::rfcomm::Stream::connect(sock_addr).await {

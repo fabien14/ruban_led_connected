@@ -52,12 +52,7 @@ impl Communication {
                     None => ()
                 }
                 
-                let rx = self.manager.connect_device(device_address).await;
-                std::thread::spawn(move || {
-                    for r in rx.unwrap() {
-                        println!("{}", r);
-                    }
-                });
+                let _ = self.manager.connect_device(device_address).await;
                 
             } else if rx_msg.starts_with("send ") {
                 let rx_message_without_type = rx_msg.replace("send ", "");

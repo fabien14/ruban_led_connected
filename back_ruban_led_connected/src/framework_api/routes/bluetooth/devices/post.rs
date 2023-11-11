@@ -2,11 +2,11 @@ use std::time::{Duration, Instant};
 
 use actix::prelude::*;
 use actix::{Actor, StreamHandler};
-use actix_web::{web, Error, HttpRequest, HttpResponse, Result};
+use actix_web::{web, Error, HttpRequest, HttpResponse, Result, Responder};
 use actix_web_actors::ws;
 
 use crate::framework_api::routes::bluetooth;
-use crate::framework_bluetooth::DeviceAddress;
+use crate::framework_bluetooth::{DeviceAddress, Communication};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -85,7 +85,6 @@ impl Handler<bluetooth::Message> for MyWs {
     type Result = ();
 
     fn handle(&mut self, msg: bluetooth::Message, ctx: &mut Self::Context) {
-        println!("la");
         ctx.text(msg.0);
     }
 }
@@ -134,7 +133,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyWs {
     }
 }
 
-pub async fn connect(
+pub async fn stream(
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<bluetooth::BluetoothServerWS>>,
@@ -143,4 +142,12 @@ pub async fn connect(
     let resp = ws::start(MyWs::new(srv.get_ref().clone(), device_address_path.clone()), &req, stream);
     println!("{:?}", resp);
     resp
+}
+
+pub async fn connect(device_address_path: web::Path<DeviceAddress>, data: web::Data<Communication>) -> Result<impl Responder> {
+    let communication = &data;
+    let mut manager_bluetooth = communication.manager.clone();
+    let _ = manager_bluetooth.connect_device(device_address_path.to_owned()).await;
+
+    Ok(HttpResponse::Ok())
 }

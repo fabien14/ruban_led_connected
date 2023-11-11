@@ -61,7 +61,7 @@ impl BluetoothServerWS {
 impl BluetoothServerWS {
     fn send_message(&mut self, address_device:DeviceAddress, message: &str, skip_id: usize) {
         match self.sessions.get_mut(&address_device) {
-            Some(mut session) => {
+            Some(session) => {
                 for (id, addr) in session {
                     if *id != skip_id {
                         addr.do_send(Message(message.to_owned()));
@@ -109,7 +109,7 @@ impl Handler<Connect> for BluetoothServerWS {
         let id = self.rng.gen::<usize>();
 
         match self.sessions.get_mut(&msg.address_device) {
-            Some(mut session) => {
+            Some(session) => {
                 session.insert(id, msg.addr.to_owned());
             },
             None => {
@@ -132,7 +132,7 @@ impl Handler<Disconnect> for BluetoothServerWS {
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
         match self.sessions.get_mut(&msg.address_device) {
-            Some(mut session) => {
+            Some(session) => {
                 session.remove(&msg.id).is_some();
             },
             None => ()
