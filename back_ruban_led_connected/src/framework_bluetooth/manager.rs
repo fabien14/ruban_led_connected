@@ -51,7 +51,7 @@ pub struct Devices {
 
 #[derive(Deserialize, Debug)]
 pub struct DevicesFilters {
-    pub connected: bool
+    pub connected: Option<bool>
 }
 
 impl Devices {
@@ -64,7 +64,7 @@ impl Devices {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Manager {
     pub devices_connected: HashMap<DeviceAddress, Device>,
     session: Session,
@@ -143,7 +143,7 @@ impl Manager {
         }
     }
 
-    pub async fn start_scan(&mut self) -> Scan {
+    pub async fn start_scan(&self) -> Scan {
         let is_discovering = match self.adapter.is_discovering().await {
             Ok(is_discovering) => is_discovering,
             Err(_) => false,
@@ -180,7 +180,7 @@ impl Manager {
         scan
     }
 
-    pub async fn get_devices(&self, filters:Option<DevicesFilters>) -> Option<Devices> {
+    pub async fn get_devices(&self, filters:DevicesFilters) -> Option<Devices> {
         let device_addresses_return = self.adapter.device_addresses().await;
         let device_addresses = match device_addresses_return {
             Ok(device_addresses) => device_addresses,
@@ -196,9 +196,9 @@ impl Manager {
                 Err(_) => continue,
             };
 
-            match &filters {
-                Some(filter) => {
-                    if filter.connected && device.connected {
+            match filters.connected {
+                Some(filter_connected) => {
+                    if filter_connected == device.connected {
                         devices.device.push(device);
                     }
                 }, 
@@ -210,7 +210,7 @@ impl Manager {
     }
 
     pub async fn get_device(&self, address: DeviceAddress) -> Option<Device> {
-        let devices = self.get_devices(None).await.unwrap();
+        let devices = self.get_devices(DevicesFilters { connected: None }).await.unwrap();
         let device = devices
             .device
             .into_iter()

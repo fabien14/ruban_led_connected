@@ -1,16 +1,22 @@
 use crate::framework_bluetooth::{DeviceAddress, Manager};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Communication {
     pub manager: Manager,
+    pub send_to_manager: Option<SyncSender<String>>
 }
 
 impl Communication {
     pub async fn new() -> Self {
         let manager = Manager::new().await;
 
-        let communication = Self { manager: manager };
+        let communication = Self { 
+            manager: manager,
+            send_to_manager: None
+        };
+
+        println!("new communication");
 
         communication
     }
@@ -21,8 +27,9 @@ impl Communication {
         let (tx_out_intern, rx_out_externe) = sync_channel(1);
         // bleutooth manager = > exterieur
 
-        let mut comm = self.clone();
+        self.send_to_manager = Some(SyncSender::clone(&tx_in_externe));
 
+        let mut comm = self.clone();
         let _ = std::thread::spawn(move || {
             let rt = tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
@@ -34,6 +41,18 @@ impl Communication {
         });
 
         (tx_in_externe, rx_out_externe)
+    }
+
+    pub fn send_to_manager(&self, msg:String) {
+        println!("{:?}", self.send_to_manager);
+        match &self.send_to_manager {
+            Some(sender) => {
+                let _ = sender.send(msg);
+            },
+            None => {
+                println!("No chanel set !!!");
+            }
+        }
     }
 
     async fn send(&self, tx_out_intern: SyncSender<String>, message: String) {
@@ -51,6 +70,8 @@ impl Communication {
                     Some(_) => continue,
                     None => ()
                 }
+
+                print!("connecting ....");
                 
                 let _ = self.manager.connect_device(device_address).await;
                 
@@ -63,5 +84,6 @@ impl Communication {
                 self.manager.send_device(device_address, message.unwrap().to_string()).await;
             }
         }
+        println!("com receiver down");
     }
 }

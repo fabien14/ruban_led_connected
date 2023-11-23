@@ -1,7 +1,11 @@
 <script setup lang="ts">
-    import { ref, inject } from 'vue';
+    import { ref, inject, onBeforeUnmount } from 'vue';
     import apiWebSocketSetup from "@/services/web-socket";
     import { useRouter } from 'vue-router';
+
+    onBeforeUnmount(() => {
+        webSocket.close();
+    });
 
     const router = useRouter()
     const apiClient: ApiClient = inject('apiClient');
@@ -124,6 +128,8 @@
     };
 
     getScanInfo();
+
+
 
 </script>
 

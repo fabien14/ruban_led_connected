@@ -8,6 +8,7 @@ use actix_web::dev::Server;
 use actix_web::{guard, web, App, HttpServer, HttpResponse};
 use anyhow;
 use std::net::TcpListener;
+use std::sync::{Arc, Mutex};
 
 pub struct Application {
     port: u16,
@@ -17,7 +18,7 @@ pub struct Application {
 impl Application {
     pub async fn build(
         configuration: Settings,
-        app_blue: Communication,
+        app_blue: Arc<Mutex<Communication>>,
     ) -> Result<Self, anyhow::Error> {
         let address = format!(
             "{}:{}",
@@ -25,8 +26,8 @@ impl Application {
         );
         let listener = TcpListener::bind(address)?;
         let port = listener.local_addr().unwrap().port();
-        let ws_bluetooth_devices = BluetoothServerWS::new(app_blue.clone()).start();
-        let ws_scan_devices = ScanServerWS::new(app_blue.clone()).start();
+        let ws_bluetooth_devices = BluetoothServerWS::new(Arc::clone(&app_blue)).start();
+        let ws_scan_devices = ScanServerWS::new(Arc::clone(&app_blue)).start();
         let server = run(
             listener,
             configuration.application.base_url,
@@ -54,12 +55,12 @@ pub struct ApplicationBaseUrl(pub String);
 async fn run(
     listener: TcpListener,
     base_url: String,
-    app_blue: Communication,
+    app_blue: Arc<Mutex<Communication>>,
     ws_bluetooth_devices: Addr<BluetoothServerWS>,
     ws_scan_devices: Addr<ScanServerWS>
 ) -> Result<Server, anyhow::Error> {
     let base_url = web::Data::new(ApplicationBaseUrl(base_url));
-    let app_data_blue = web::Data::new(app_blue.clone());
+    let app_data_blue = web::Data::from(Arc::clone(&app_blue));
     let bluetooth_server = web::Data::new(ws_bluetooth_devices.clone());
     let scan_server = web::Data::new(ws_scan_devices.clone());
 
@@ -88,7 +89,7 @@ async fn run(
             .app_data(bluetooth_server.clone())
             .app_data(scan_server.clone())
             .app_data(base_url.clone())
-            .app_data(app_data_blue.clone())
+            .app_data(web::Data::clone(&app_data_blue))
             .default_service(web::route().guard(guard::Options()).to(|| HttpResponse::Ok()))
     })
     .listen(listener)?

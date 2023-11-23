@@ -82,7 +82,6 @@ impl Device {
         let mut stream_socket = None;
 
         println!("    Connecting...");
-        println!("dddddd");
         let mut retries = 2;
         while retries > 0 {
             stream_socket = match bluer::rfcomm::Stream::connect(sock_addr).await {
@@ -160,9 +159,16 @@ impl Device {
 
         loop {
             let mut buffer = String::new();
-            let len_string_read = rh.read_to_string(&mut buffer).await.unwrap();
-            if len_string_read > 1 {
-                tx.send(buffer).unwrap();
+            let len_string_read = rh.read_to_string(&mut buffer).await;
+            match len_string_read {
+                Ok(len_string) => {
+                    if len_string > 1 {
+                        tx.send(buffer).unwrap();
+                    }
+                },
+                Err(_) => {
+                    break
+                }
             }
         }
     }

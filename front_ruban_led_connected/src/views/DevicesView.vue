@@ -13,7 +13,7 @@
     const devicesList = ref<device[]>([]);
 
     const refreshDevices = () => {
-        apiClient.get('/bluetooth/devices?connected=false')
+        apiClient.get('/bluetooth/devices?connected=true')
         .then((response) => {
             devicesList.value = response.data.device;
         });

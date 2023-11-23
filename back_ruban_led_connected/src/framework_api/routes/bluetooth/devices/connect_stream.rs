@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 use std::sync::mpsc::SyncSender;
+use std::sync::{Arc, Mutex};
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -30,7 +31,7 @@ pub struct BluetoothMessage {
     pub address_device: DeviceAddress
 }
 
-#[derive(Message)]
+#[derive(Message, Debug)]
 #[rtype(result = "()")]
 pub struct ClientMessage {
     /// Id of the client session
@@ -43,12 +44,12 @@ pub struct ClientMessage {
 pub struct BluetoothServerWS {
     sessions: HashMap<DeviceAddress, HashMap<usize, Recipient<Message>>>,
     rng: ThreadRng,
-    app_blue: Communication,
+    app_blue: Arc<Mutex<Communication>>,
     sender_blue: Option<SyncSender<String>>,
 }
 
 impl BluetoothServerWS {
-    pub fn new(app_blue: Communication) -> Self {
+    pub fn new(app_blue: Arc<Mutex<Communication>>) -> Self {
         Self {
             sessions: HashMap::new(),
             rng: rand::thread_rng(),
@@ -70,8 +71,6 @@ impl BluetoothServerWS {
             },
             None => ()
         }
-
-        
     }
 }
 
@@ -80,9 +79,12 @@ impl Actor for BluetoothServerWS {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         println!("ici");
-        let (tx_in_externe, rx_out_externe) = self.app_blue.get_cannaux();
+        let mut communication_blue = self.app_blue.lock().unwrap();
+        let (tx_in_externe, rx_out_externe) = communication_blue.get_cannaux();
         self.sender_blue = Some(tx_in_externe.clone());
         let serveur = ctx.address();
+
+        println!("{:?}", communication_blue.send_to_manager);
 
         let _ = std::thread::spawn(move || {
             println!("ici thread");
@@ -156,9 +158,11 @@ impl Handler<ClientMessage> for BluetoothServerWS {
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
         // tous les messages utilisateur passe par ici
         // envoyer via self.sender le message recu au communicateur bluetooth
+        println!("{:?}", msg);
         self.send_message(msg.address_device.clone(), msg.msg.as_str(), 0);
 
         let message = format!("send {} {}", msg.address_device, msg.msg);
+        println!("{:?}", message);
         self.sender_blue.clone().unwrap().send(message).unwrap();
     }
 }

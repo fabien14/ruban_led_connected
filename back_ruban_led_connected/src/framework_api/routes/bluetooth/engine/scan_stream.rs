@@ -1,4 +1,4 @@
-use crate::framework_bluetooth::Communication;
+use crate::framework_bluetooth::{Communication, DevicesFilters};
 use std::collections::HashMap;
 
 use actix::prelude::*;
@@ -32,13 +32,13 @@ pub struct ScanMessage {
 pub struct ScanServerWS {
     sessions: HashMap<usize, Recipient<ScanServerMessage>>,
     rng: ThreadRng,
-    app_blue: Communication,
+    app_blue: Arc<Mutex<Communication>>,
     threads_get_devices_started: Arc<Mutex<HashMap<std::thread::ThreadId, bool>>>
 }
 
 impl ScanServerWS {
 
-    pub fn new(app_blue: Communication) -> Self {
+    pub fn new(app_blue: Arc<Mutex<Communication>>) -> Self {
         Self {
             sessions: HashMap::new(),
             rng: rand::thread_rng(),
@@ -48,7 +48,7 @@ impl ScanServerWS {
     }
 
     pub fn start_get_devices(&self, addr_server: Addr<ScanServerWS>) {
-        let blue_manager = self.app_blue.manager.clone();
+        let communication_app_blue = Arc::clone(&self.app_blue);
         let threads_get_devices_started_ref = Arc::clone(&self.threads_get_devices_started);
         
         let _ = std::thread::spawn(move || {
@@ -62,18 +62,20 @@ impl ScanServerWS {
                 let thread_id = std::thread::current().id();
                 
                 while continue_get_devices {
+                    let trois_second = Duration::from_secs(3);
+                    std::thread::sleep(trois_second);
 
-                    let devices = blue_manager.get_devices(None).await;
+                    let communication_app_blue_ref = communication_app_blue.lock().unwrap();
+                    let devices = communication_app_blue_ref.manager.get_devices(DevicesFilters{connected:None}).await;
+                    println!("start get devices, while {:?}", devices);
                     match devices {
                         Some(devices) => {
                             addr_server.do_send(ScanMessage { 
                                 msg: devices.to_json_string()
                             });
                         },
-                        _ => continue
+                        None => continue
                     }
-                    let trois_second = Duration::from_secs(3);
-                    std::thread::sleep(trois_second);
 
                     let mut threads_get_devices_started_ref_val = threads_get_devices_started_ref.lock().unwrap();
 
