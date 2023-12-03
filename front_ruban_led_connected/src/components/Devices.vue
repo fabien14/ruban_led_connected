@@ -37,17 +37,19 @@
     onMounted(() => {
         console.log(route.params.id);
         adressDevice.value = route.params.id;
-        apiWebSocket = new apiWebSocketSetup({
+        apiWebSocket = apiWebSocketSetup({
             url: `ws://localhost:8080/bluetooth/devices/${adressDevice.value}/stream`
         });
 
         webSocket = apiWebSocket.getWebSocket();
 
-        webSocket.onmessage = (event) => {
-            console.log(event.data);
-            //const obj = JSON.parse(event.data);
-            
-        };
+        if (webSocket) {
+            webSocket.onmessage = (event) => {
+                console.log(event.data);
+                //const obj = JSON.parse(event.data);
+                
+            };
+        }
     });
 
     onBeforeUnmount(() => {

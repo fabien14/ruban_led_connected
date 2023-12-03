@@ -3,10 +3,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use bluer::rfcomm::stream::{OwnedReadHalf, OwnedWriteHalf};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::time::Duration;
 use std::fmt;
-
-const SCAN_DURATION: Duration = Duration::from_secs(20);
 
 #[derive(Clone, Serialize, PartialEq, Eq, Debug)]
 pub struct DeviceName(pub String);

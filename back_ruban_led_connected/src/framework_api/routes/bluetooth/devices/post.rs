@@ -146,13 +146,13 @@ pub async fn stream(
 }
 
 pub async fn connect(device_address_path: web::Path<DeviceAddress>, data: web::Data<Mutex<Communication>>) -> Result<impl Responder> {
-    let mut communication = &data.lock().unwrap();
+    /* let communication = &data.lock().unwrap();
     let message = format!("connect {}", device_address_path.to_owned());
-    communication.send_to_manager(message);
+    communication.send_to_manager(message); */
 
-    //let mut manager_bluetooth = communication.manager.clone();
-    //let mut mana = &communication.manager;
-    //let _ = mana.connect_device(device_address_path.to_owned()).await;
+    let communication_ = &mut data.lock().unwrap();
+    let mana = &mut communication_.manager;
+    let _ = mana.connect_device(device_address_path.to_owned()).await;
 
     Ok(HttpResponse::Ok())
 }

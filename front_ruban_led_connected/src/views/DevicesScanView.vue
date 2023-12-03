@@ -32,15 +32,17 @@
     const devicesList = ref<device[]>([]);
     let activeChange = true;
 
-    let apiWebSocket = new apiWebSocketSetup({
+    let apiWebSocket = apiWebSocketSetup({
         url: 'ws://localhost:8080/bluetooth/scan-stream'
     });
     let webSocket = apiWebSocket.getWebSocket();
-
-    webSocket.onmessage = (event) => {
-        const obj = JSON.parse(event.data);
-        devicesList.value = obj.device;
-    };
+    
+    if (webSocket) {
+        webSocket.onmessage = (event) => {
+            const obj = JSON.parse(event.data);
+            devicesList.value = obj.device;
+        };
+    }
     
     const changeIsScanRunning = () => {
         if (!scanInfo.value.starting && activeChange) {

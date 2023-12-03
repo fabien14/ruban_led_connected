@@ -16,8 +16,8 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-    tokio::spawn(async move {
-        application.run_until_stopped().await;
+    let _ = tokio::spawn(async move {
+        let _ = application.run_until_stopped().await;
     })
     .await;
 

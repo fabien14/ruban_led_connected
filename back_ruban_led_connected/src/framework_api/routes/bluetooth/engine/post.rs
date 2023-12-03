@@ -14,7 +14,7 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub async fn scan_start(data: web::Data<Mutex<Communication>>) -> Result<impl Responder> {
-    let mut communication = &data.lock().unwrap();
+    let communication = &data.lock().unwrap();
     let scan = communication.manager.start_scan().await;
 
     Ok(web::Json(scan))
@@ -117,7 +117,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MyScanWs {
                 println!("bah");
 
                 let m = text.trim();
-                let msg = m.to_owned();
+                let _msg = m.to_owned();
 
                 
             }

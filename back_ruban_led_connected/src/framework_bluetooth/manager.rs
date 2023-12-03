@@ -1,6 +1,5 @@
 use crate::framework_bluetooth::{Device, DeviceAddress};
 
-use actix_web::cookie::Delta;
 use bluer::agent::{Agent, ReqResult, RequestPasskey, RequestPinCode};
 use bluer::{Adapter, Session};
 
@@ -12,8 +11,8 @@ use chrono::{Local, DateTime};
 use std::sync::{Arc, Mutex};
 
 mod option_date_serialiser {
-    use chrono::{DateTime, Local, NaiveDateTime};
-    use serde::{self, Deserialize, Serializer, Deserializer};
+    use chrono::{DateTime, Local};
+    use serde::{self, Serializer};
 
     const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
 
@@ -166,8 +165,8 @@ impl Manager {
                 .build()
                 .unwrap();
             rt.block_on(async {
-                let discover = cl.discover_devices().await.unwrap();
-                pin_mut!(discover);
+                let _discover = cl.discover_devices().await.unwrap();
+                pin_mut!(_discover);
 
                 let timeout = cl.discoverable_timeout().await.unwrap() as u64;
                 let scan_duration: time::Duration = time::Duration::from_secs(timeout);
